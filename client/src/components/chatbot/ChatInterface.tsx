@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
-import { Send, Bot, User, ArrowDown } from 'lucide-react';
+import { Send, Bot, User, ArrowDown, Axis3D } from 'lucide-react';
+import axios from "../../lib/axiosInstance"
 
 interface Message {
   id: number;
@@ -84,7 +85,7 @@ const ChatInterface = () => {
     }, 1500);
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim() === '') return;
     
@@ -99,8 +100,17 @@ const ChatInterface = () => {
     setMessages(prev => [...prev, newMessage]);
     setInputMessage('');
     
-    // Simulate AI response
-    simulateResponse(inputMessage);
+    const res = await axios.post("/chat", {message : inputMessage})
+    console.log("asdfasfsd : ", res.data.reply);
+    const aiMessage = {
+      id: newMessage.id + 1,
+      text: res.data.reply,
+      sender: 'ai' as const,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, aiMessage]);
+    
   };
 
   const handleSuggestionClick = (question: string) => {
