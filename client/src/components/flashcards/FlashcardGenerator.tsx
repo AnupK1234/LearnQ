@@ -23,6 +23,7 @@ import {
   X
 } from 'lucide-react';
 import { toast } from "sonner";
+import axios from "../../lib/axiosInstance"
 
 interface Flashcard {
   id: number;
@@ -42,63 +43,6 @@ const FlashcardGenerator = () => {
   const [isStudying, setIsStudying] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sample flashcards for biology
-  const sampleBiologyFlashcards = [
-    {
-      id: 1,
-      front: "What is photosynthesis?",
-      back: "The process by which green plants and some other organisms use sunlight to synthesize nutrients from carbon dioxide and water, generating oxygen as a byproduct."
-    },
-    {
-      id: 2,
-      front: "Define cellular respiration:",
-      back: "The metabolic process where cells convert nutrients into ATP (energy), carbon dioxide, and water."
-    },
-    {
-      id: 3,
-      front: "What are mitochondria?",
-      back: "Organelles that generate most of the cell's supply of ATP (energy). Often referred to as the 'powerhouse of the cell'."
-    },
-    {
-      id: 4,
-      front: "Explain DNA replication:",
-      back: "The biological process of producing two identical replicas of DNA from one original DNA molecule, which occurs before cell division."
-    },
-    {
-      id: 5,
-      front: "What is natural selection?",
-      back: "The process by which organisms better adapted to their environment tend to survive and produce more offspring, driving evolution."
-    }
-  ];
-
-  // Sample flashcards for history
-  const sampleHistoryFlashcards = [
-    {
-      id: 1,
-      front: "When did World War II begin?",
-      back: "September 1, 1939, when Nazi Germany invaded Poland."
-    },
-    {
-      id: 2,
-      front: "Who was the first President of the United States?",
-      back: "George Washington (1789-1797)"
-    },
-    {
-      id: 3,
-      front: "What was the Renaissance?",
-      back: "A period of European cultural, artistic, political, and economic 'rebirth' following the Middle Ages, spanning the 14th to 17th centuries."
-    },
-    {
-      id: 4,
-      front: "What was the Industrial Revolution?",
-      back: "A period of major industrialization that took place during the late 1700s and early 1800s, starting in Great Britain and later spreading to Western Europe and the United States."
-    },
-    {
-      id: 5,
-      front: "What was the significance of the Magna Carta?",
-      back: "Signed in 1215, it established the principle that everyone, including the king, was subject to the law and guaranteed certain rights to individuals."
-    }
-  ];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -108,7 +52,7 @@ const FlashcardGenerator = () => {
     }
   };
 
-  const handleGenerateFlashcards = () => {
+  const handleGenerateFlashcards = async () => {
     if (!topic && !uploadedFile) {
       toast.error("Please enter a topic or upload a file to generate flashcards.");
       return;
@@ -116,36 +60,19 @@ const FlashcardGenerator = () => {
 
     setIsGenerating(true);
 
-    // Simulate AI processing delay
-    setTimeout(() => {
-      // Determine which sample flashcards to use based on topic
-      let generatedFlashcards;
-      
-      if (topic.toLowerCase().includes('biology') || 
-          topic.toLowerCase().includes('science') || 
-          topic.toLowerCase().includes('photosynthesis')) {
-        generatedFlashcards = sampleBiologyFlashcards;
-      } else if (topic.toLowerCase().includes('history') || 
-                topic.toLowerCase().includes('war') || 
-                topic.toLowerCase().includes('president')) {
-        generatedFlashcards = sampleHistoryFlashcards;
-      } else {
-        // Use a mix of both for other topics
-        generatedFlashcards = [...sampleBiologyFlashcards.slice(0, 3), ...sampleHistoryFlashcards.slice(0, 2)];
-      }
+    const res = await axios.post("/flashcards", {topic, additionalInfo})
+    const generatedFlashcards = res.data
+    
+    const modifiedFlashcards = generatedFlashcards && generatedFlashcards?.map(card => ({
+      ...card,
+      back: mode === 'learn' 
+        ? card.back.split('.')[0] + '.' // Just first sentence for "Learn Fast" mode
+        : card.back // Full content for "Master" mode
+    }));
+    setFlashcards(modifiedFlashcards);
+    setIsGenerating(false);
+    setIsStudying(true);
 
-      // Modify content based on learning mode
-      const modifiedFlashcards = generatedFlashcards.map(card => ({
-        ...card,
-        back: mode === 'learn' 
-          ? card.back.split('.')[0] + '.' // Just first sentence for "Learn Fast" mode
-          : card.back // Full content for "Master" mode
-      }));
-
-      setFlashcards(modifiedFlashcards);
-      setIsGenerating(false);
-      setIsStudying(true);
-    }, 2000);
   };
 
   const handleNext = () => {
