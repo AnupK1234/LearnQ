@@ -25,6 +25,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+app.get("/test", (req, res) => {
+  res.send("SERVER IS RUNNING")
+})
+
 // Route to process messages
 app.post("/chat", async (req, res) => {
   const { message } = req.body;
